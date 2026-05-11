@@ -1,13 +1,13 @@
 exports.up = (pgm) => {
-  pgm.createTable('bookmarks', {
+  pgm.createTable('messages', {
     id: 'id',
-    title: { type: 'varchar(255)', notNull: true },
-    url: { type: 'text', notNull: true },
-    tag: { type: 'varchar(50)', default: '' },
+    content: { type: 'text', notNull: true },
+    room: { type: 'varchar(100)', default: '' },
+    username: { type: 'varchar(100)', default: '' },
     created_at: { type: 'timestamp', default: pgm.func('current_timestamp') }
   });
 };
 
 exports.down = (pgm) => {
-  pgm.dropTable('bookmarks');
+  pgm.dropTable('messages');
 };
