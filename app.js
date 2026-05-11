@@ -21,17 +21,17 @@
     return d.innerHTML;
   }
 
-  function renderItems(items) {
-    countBadge.textContent = items.length;
-    if (!items || items.length === 0) {
+  function renderItems(bookmarks) {
+    countBadge.textContent = bookmarks.length;
+    if (!bookmarks || bookmarks.length === 0) {
       itemList.innerHTML = "";
       emptyState.style.display = "block";
       return;
     }
     emptyState.style.display = "none";
-    itemList.innerHTML = items.map(function(item) {
+    itemList.innerHTML = bookmarks.map(function(item) {
       return '<div class="item-card" data-id="' + item.id + '">' +
-        '<div class="item-info">' + '<h3>' + escHtml(item.name) + '</h3>' + '\n' + (item.description ? '<p>Description: ' + escHtml(item.description) + '</p>' : '') + '</div>' +
+        '<div class="item-info">' + '<h3>' + escHtml(item.title) + '</h3>' + '\n' + (item.url ? '<p>URL: ' + escHtml(item.url) + '</p>' : '') + '\n' + (item.tag ? '<p>Tag: ' + escHtml(item.tag) + '</p>' : '') + '</div>' +
         '<button class="btn-delete" data-id="' + item.id + '" title="Delete">🗑</button></div>';
     }).join("");
     itemList.querySelectorAll(".btn-delete").forEach(function(btn) {
@@ -40,38 +40,38 @@
   }
 
   function loadItems() {
-    fetch("/api/items")
+    fetch("/api/bookmarks")
       .then(function(r) { return r.json(); })
-      .then(function(data) { if (data.success) renderItems(data.items); })
+      .then(function(data) { if (data.success) renderItems(data.bookmarks); })
       .catch(function() { renderItems([]); });
   }
 
   function deleteItem(id) {
-    fetch("/api/items/" + id, { method: "DELETE" })
+    fetch("/api/bookmarks/" + id, { method: "DELETE" })
       .then(function(r) { return r.json(); })
       .then(function(data) { if (data.success) loadItems(); })
       .catch(function(e) { console.error("Delete failed:", e); });
   }
 
   addBtn.addEventListener("click", function() {
-    var _val = document.getElementById("field_name").value.trim();
-    if (!_val) { showError("Name is required"); document.getElementById("field_name").focus(); return; }
+    var _val = document.getElementById("field_title").value.trim();
+    if (!_val) { showError("Title is required"); document.getElementById("field_title").focus(); return; }
     addBtn.disabled = true;
-    fetch("/api/items", {
+    fetch("/api/bookmarks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: document.getElementById("field_name").value.trim(), description: document.getElementById("field_description").value.trim() })
+      body: JSON.stringify({ title: document.getElementById("field_title").value.trim(), url: document.getElementById("field_url").value.trim(), tag: document.getElementById("field_tag").value.trim() })
     })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.success) { document.getElementById("field_name").value = ""; document.getElementById("field_description").value = ""; loadItems(); }
+        if (data.success) { document.getElementById("field_title").value = ""; document.getElementById("field_url").value = ""; document.getElementById("field_tag").value = ""; loadItems(); }
         else { showError(data.message || "Failed to add"); }
       })
       .catch(function() { showError("Network error"); })
       .finally(function() { addBtn.disabled = false; });
   });
 
-  document.getElementById("field_name").addEventListener("keydown", function(e) { if (e.key === "Enter") addBtn.click(); });
+  document.getElementById("field_title").addEventListener("keydown", function(e) { if (e.key === "Enter") addBtn.click(); });
 
   loadItems();
 })();
