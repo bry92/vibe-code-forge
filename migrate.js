@@ -8,9 +8,9 @@ async function migrate() {
 
   try {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS items (
+      CREATE TABLE IF NOT EXISTS bookmarks (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL, description TEXT DEFAULT '',
+        title VARCHAR(255) NOT NULL, url TEXT NOT NULL, tag VARCHAR(50) DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
