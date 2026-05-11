@@ -3,18 +3,18 @@
 module.exports = function(pool) {
   return {
     async getAll() {
-      const { rows } = await pool.query('SELECT * FROM items ORDER BY created_at DESC');
+      const { rows } = await pool.query('SELECT * FROM bookmarks ORDER BY created_at DESC');
       return rows;
     },
-    async create(name, description) {
+    async create(title, url, tag) {
       const { rows } = await pool.query(
-        'INSERT INTO items (name, description) VALUES ($1, $2) RETURNING *',
-        [name, (description || '').trim()]
+        'INSERT INTO bookmarks (title, url, tag) VALUES ($1, $2, $3) RETURNING *',
+        [title, url, (tag || '').trim()]
       );
       return rows[0];
     },
     async deleteById(id) {
-      await pool.query('DELETE FROM items WHERE id = $1', [id]);
+      await pool.query('DELETE FROM bookmarks WHERE id = $1', [id]);
     }
   };
 };
