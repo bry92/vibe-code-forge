@@ -3,11 +3,20 @@
 // === END CONTRACT MARKERS ===
 
 (function() {
-  var addBtn = document.getElementById("addBtn");
-  var itemList = document.getElementById("itemList");
+  var messageInput = document.getElementById("messageInput");
+  var sendBtn = document.getElementById("sendBtn");
+  var messageList = document.getElementById("messageList");
   var emptyState = document.getElementById("emptyState");
   var formError = document.getElementById("formError");
-  var countBadge = document.getElementById("countBadge");
+  var usernameInput = document.getElementById("usernameInput");
+  var roomSelect = document.getElementById("roomSelect");
+  var currentRoomLabel = document.getElementById("currentRoom");
+  var currentRoom = "general";
+  var pollTimer = null;
+
+  function getUsername() {
+    return (usernameInput.value || "").trim() || "Anonymous";
+  }
 
   function showError(msg) {
     formError.textContent = msg;
@@ -17,61 +26,75 @@
 
   function escHtml(str) {
     var d = document.createElement("div");
-    d.textContent = str || "";
+    d.textContent = str;
     return d.innerHTML;
   }
 
-  function renderItems(bookmarks) {
-    countBadge.textContent = bookmarks.length;
-    if (!bookmarks || bookmarks.length === 0) {
-      itemList.innerHTML = "";
-      emptyState.style.display = "block";
+  function formatTime(ts) {
+    var d = new Date(ts);
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function renderMessages(messages) {
+    if (!messages || messages.length === 0) {
+      messageList.innerHTML = "";
+      messageList.appendChild(emptyState);
+      emptyState.style.display = "flex";
       return;
     }
     emptyState.style.display = "none";
-    itemList.innerHTML = bookmarks.map(function(item) {
-      return '<div class="item-card" data-id="' + item.id + '">' +
-        '<div class="item-info">' + '<h3>' + escHtml(item.title) + '</h3>' + '\n' + (item.url ? '<p>URL: ' + escHtml(item.url) + '</p>' : '') + '\n' + (item.tag ? '<p>Tag: ' + escHtml(item.tag) + '</p>' : '') + '</div>' +
-        '<button class="btn-delete" data-id="' + item.id + '" title="Delete">🗑</button></div>';
+    var myName = getUsername();
+    messageList.innerHTML = messages.map(function(msg) {
+      var isSelf = msg.username === myName;
+      return '<div class="flex flex-col ' + (isSelf ? "items-end" : "items-start") + '">' +
+        '<div class="msg-username ' + (isSelf ? "text-indigo-600" : "text-gray-700") + '">' + escHtml(msg.username || "Anonymous") + '</div>' +
+        '<div class="msg-bubble ' + (isSelf ? "self" : "other") + '">' + escHtml(msg.content) + '</div>' +
+        '<div class="msg-meta">' + formatTime(msg.created_at) + '</div>' +
+        '</div>';
     }).join("");
-    itemList.querySelectorAll(".btn-delete").forEach(function(btn) {
-      btn.addEventListener("click", function() { deleteItem(btn.dataset.id); });
-    });
+    messageList.scrollTop = messageList.scrollHeight;
   }
 
-  function loadItems() {
-    fetch("/api/bookmarks")
+  function loadMessages() {
+    fetch("/api/messages?room=" + encodeURIComponent(currentRoom))
       .then(function(r) { return r.json(); })
-      .then(function(data) { if (data.success) renderItems(data.bookmarks); })
-      .catch(function() { renderItems([]); });
+      .then(function(data) { if (data.success) renderMessages(data.messages); })
+      .catch(function() {});
   }
 
-  function deleteItem(id) {
-    fetch("/api/bookmarks/" + id, { method: "DELETE" })
-      .then(function(r) { return r.json(); })
-      .then(function(data) { if (data.success) loadItems(); })
-      .catch(function(e) { console.error("Delete failed:", e); });
-  }
-
-  addBtn.addEventListener("click", function() {
-    var _val = document.getElementById("field_title").value.trim();
-    if (!_val) { showError("Title is required"); document.getElementById("field_title").focus(); return; }
-    addBtn.disabled = true;
-    fetch("/api/bookmarks", {
+  function sendMessage() {
+    var content = messageInput.value.trim();
+    if (!content) { showError("Message cannot be empty"); messageInput.focus(); return; }
+    sendBtn.disabled = true;
+    fetch("/api/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: document.getElementById("field_title").value.trim(), url: document.getElementById("field_url").value.trim(), tag: document.getElementById("field_tag").value.trim() })
+      body: JSON.stringify({ content: content, room: currentRoom, username: getUsername() })
     })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.success) { document.getElementById("field_title").value = ""; document.getElementById("field_url").value = ""; document.getElementById("field_tag").value = ""; loadItems(); }
-        else { showError(data.message || "Failed to add"); }
+        if (data.success) { messageInput.value = ""; loadMessages(); }
+        else { showError(data.message || "Failed to send"); }
       })
       .catch(function() { showError("Network error"); })
-      .finally(function() { addBtn.disabled = false; });
+      .finally(function() { sendBtn.disabled = false; messageInput.focus(); });
+  }
+
+  sendBtn.addEventListener("click", sendMessage);
+  messageInput.addEventListener("keydown", function(e) { if (e.key === "Enter") sendMessage(); });
+
+  roomSelect.addEventListener("change", function() {
+    currentRoom = roomSelect.value;
+    currentRoomLabel.textContent = currentRoom;
+    loadMessages();
   });
 
-  document.getElementById("field_title").addEventListener("keydown", function(e) { if (e.key === "Enter") addBtn.click(); });
+  // Poll for new messages every 3 seconds
+  function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(loadMessages, 3000);
+  }
 
-  loadItems();
+  loadMessages();
+  startPolling();
 })();
