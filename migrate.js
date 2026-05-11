@@ -8,9 +8,9 @@ async function migrate() {
 
   try {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS bookmarks (
+      CREATE TABLE IF NOT EXISTS messages (
         id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL, url TEXT NOT NULL, tag VARCHAR(50) DEFAULT '',
+        content TEXT NOT NULL, room VARCHAR(100) DEFAULT 'general', username VARCHAR(100) DEFAULT 'Anonymous',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
