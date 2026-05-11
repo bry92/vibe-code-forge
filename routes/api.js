@@ -3,39 +3,36 @@ const { Router } = require('express');
 module.exports = function(pool) {
   const router = Router();
 
-  router.get('/bookmarks', async (req, res) => {
+  router.get('/messages', async (req, res) => {
     try {
-      const { rows } = await pool.query('SELECT * FROM bookmarks ORDER BY created_at DESC');
-      res.json({ success: true, bookmarks: rows });
+      const { rows } = await pool.query('SELECT * FROM messages ORDER BY created_at DESC');
+      res.json({ success: true, messages: rows });
     } catch (err) {
-      console.error('GET /bookmarks error:', err.message);
+      console.error('GET /messages error:', err.message);
       res.status(500).json({ success: false, message: 'Server error' });
     }
   });
 
-  router.post('/bookmarks', async (req, res) => {
+  router.post('/messages', async (req, res) => {
     try {
-      const { title, url, tag } = req.body;
-      if (!title || !title.toString().trim()) {
-        return res.status(400).json({ success: false, message: 'Title is required' });
-      }
-      if (!url || !url.toString().trim()) {
-        return res.status(400).json({ success: false, message: 'URL is required' });
+      const { content, room, username } = req.body;
+      if (!content || !content.toString().trim()) {
+        return res.status(400).json({ success: false, message: 'Message is required' });
       }
       const { rows } = await pool.query(
-        'INSERT INTO bookmarks (title, url, tag) VALUES ($1, $2, $3) RETURNING *',
-        [title.trim(), url.trim(), (tag || '').trim()]
+        'INSERT INTO messages (content, room, username) VALUES ($1, $2, $3) RETURNING *',
+        [content.trim(), (room || '').trim(), (username || '').trim()]
       );
-      res.status(201).json({ success: true, bookmark: rows[0] });
+      res.status(201).json({ success: true, message: rows[0] });
     } catch (err) {
-      console.error('POST /bookmarks error:', err.message);
+      console.error('POST /messages error:', err.message);
       res.status(500).json({ success: false, message: 'Server error' });
     }
   });
 
-  router.delete('/bookmarks/:id', async (req, res) => {
+  router.delete('/messages/:id', async (req, res) => {
     try {
-      await pool.query('DELETE FROM bookmarks WHERE id = $1', [req.params.id]);
+      await pool.query('DELETE FROM messages WHERE id = $1', [req.params.id]);
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ success: false, message: 'Server error' });
