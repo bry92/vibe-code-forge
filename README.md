@@ -10,25 +10,25 @@
 
 ## Files
 
+- `server.js`
+- `routes/api.js`
+- `db/pool.js`
+- `migrations/001_schema.js`
+- `package.json`
+- `index.html`
+- `styles.css`
 - `app.js`
 - `app.jsx`
-- `server.js`
-- `db/pool.js`
-- `index.html`
-- `migrate.js`
-- `styles.css`
-- `.env.example`
-- `package.json`
-- `db/queries.js`
-- `routes/api.js`
-- `routes/auth.js`
-- `middleware/auth.js`
 - `components/auth-form.jsx`
 - `components/dashboard.jsx`
-- `migrations/001_schema.js`
 - `components/data-table.jsx`
-- `components/navigation.jsx`
 - `components/create-form.jsx`
+- `components/navigation.jsx`
+- `.env.example`
+- `migrate.js`
+- `routes/auth.js`
+- `middleware/auth.js`
+- `db/queries.js`
 
 
 ## Run Locally
