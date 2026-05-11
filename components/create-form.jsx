@@ -24,7 +24,7 @@ const App = () => {
       <div className="p-8 max-w-5xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Improve Bry92/vibe- -forge</h1>
         <Card>
-          <p className="text-gray-500">Loading items...</p>
+          <p className="text-gray-500">Loading bookmarks...</p>
         </Card>
       </div>
     </div>
